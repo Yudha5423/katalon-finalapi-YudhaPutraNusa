@@ -10,18 +10,36 @@ import com.kms.katalon.core.model.FailureHandling as FailureHandling
 import com.kms.katalon.core.testcase.TestCase as TestCase
 import com.kms.katalon.core.testdata.TestData as TestData
 import com.kms.katalon.core.testng.keyword.TestNGBuiltinKeywords as TestNGKW
-import com.kms.katalon.core.testobject.TestObject as TestObject
+import com.kms.katalon.core.testobject.ResponseObject
+import com.kms.katalon.core.testobject.TestObject
+import com.kms.katalon.core.util.KeywordUtil
 import com.kms.katalon.core.webservice.keyword.WSBuiltInKeywords as WS
 import com.kms.katalon.core.webui.keyword.WebUiBuiltInKeywords as WebUI
 import com.kms.katalon.core.windows.keyword.WindowsBuiltinKeywords as Windows
+
+import groovy.json.JsonSlurper
 import internal.GlobalVariable as GlobalVariable
 import org.openqa.selenium.Keys as Keys
 
-WebUI.callTestCase(findTestCase('Services/Auth/POST_Token'), [:], FailureHandling.STOP_ON_FAILURE)
+// Send Request
+ResponseObject response = WS.sendRequest(findTestObject('Object Repository/Herokuapp/Booking/DELETE_Booking', [
+	'bookingId' : GlobalVariable.createdBookingId,
+	'tokenAuth' : GlobalVariable.authToken]))
 
-WebUI.callTestCase(findTestCase('Services/Booking/POST_Create_Booking'), [:], FailureHandling.STOP_ON_FAILURE)
+// Verify Status Code
+WS.verifyResponseStatusCode(response, 201)
 
-WebUI.callTestCase(findTestCase('Services/Booking/PUT_Update_Booking'), [:], FailureHandling.STOP_ON_FAILURE)
+// Verify response body empty
+def body = response.getResponseBodyContent()
+assert body == null ||
+       body.trim() == '' ||
+       body.trim().equalsIgnoreCase('Created')
 
-WebUI.callTestCase(findTestCase('Services/Booking/PATCH_Partial_Update_Booking'), [:], FailureHandling.STOP_ON_FAILURE)
+// Print Response
+println("Delete Booking Response:")
+println(response.getResponseText())
+
+// Log Success
+KeywordUtil.logInfo("Booking ID " + GlobalVariable.createdBookingId + " successfully deleted")
+
 
